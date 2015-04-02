@@ -1,6 +1,6 @@
 import unittest
 
-from RunITC import ITCDevice
+from RunITC import runitc
 
 
 class DeviceTestCase(unittest.TestCase):
