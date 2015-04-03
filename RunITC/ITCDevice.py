@@ -6,8 +6,12 @@
 """
 
 import visa
+import time
+import threading
 
 DEVPATH = '/home/chris/Programming/github/RunITC/test/devices.yaml'
+
+SENSORS = {"1": "TSorp", "2": "THe3", "3": "T1K"}
 
 
 class ITCDevice(object):
@@ -21,6 +25,7 @@ class ITCDevice(object):
         self.write_term = write_term
         self.heater_set = False
         self.auto_heat = False
+        self.auto_pid = False
 
     def set_resource(self, resource):
         self.resource = resource(self.address,
@@ -29,15 +34,21 @@ class ITCDevice(object):
 
     def get_tsorp(self):
         "Get the temperature at the sorption pump."
-        return self.resource.query("R1")
+        tsorp_str = self.resource.query("R1")
+        tsorp_flt = float(tsorp_str.lstrip("R"))
+        return tsorp_flt
 
     def get_the3(self):
         "Get the temperature at the sorption pump."
-        return self.resource.query("R2")
+        the3_str = self.resource.query("R2")
+        the3_flt = float(the3_str.lstrip("R"))
+        return the3_flt
 
     def get_t1k(self):
         "Get the temperature at the sorption pump."
-        return self.resource.query("R3")
+        t1k_str = self.resource.query("R3")
+        t1k_flt = float(t1k_str.lstrip("R"))
+        return t1k_flt
 
     def _set_heater_to_tsrop(self):
         "Set the heater to the sorption pump"
@@ -46,10 +57,11 @@ class ITCDevice(object):
 
     def get_heater_sensor(self):
         "Get the heater sensor"
-        sensor_nr = self.resource.query("X")
-        if sensor_nr == 'ERROR':
-            sensor_nr = self.resource.query("XH")
-        return sensor_nr.split("H")[-1][0]
+        status_byte = self.resource.query("X")
+        if status_byte == 'ERROR':
+            status_byte = self.resource.query("XH")
+        sensor_nr = status_byte.split("H")[-1][0]
+        return SENSORS[sensor_nr]
 
     def set_setpoint(self, setpoint):
         "Set the set point temperature of the sorption pump"
@@ -62,7 +74,9 @@ class ITCDevice(object):
 
     def get_setpoint(self):
         "Get the setpoint of the sorption pump heater."
-        return self.resource.query("R0")
+        setpoint_str = self.resource.query("R0")
+        setpoint_flt = float(setpoint_str.lstrip("R"))
+        return setpoint_flt
 
     def auto_heat_on(self):
         "Turn on the auto heat control."
@@ -78,20 +92,90 @@ class ITCDevice(object):
         sensor_nr = self.resource.query("X")
         if sensor_nr == 'ERROR':
             sensor_nr = self.resource.query("XA")
-        return sensor_nr.split("A")[-1][0]
+
+        sensor_nr = sensor_nr.split("A")[-1][0]
+
+        if sensor_nr == "0":
+            return "Off"
+        elif sensor_nr == "1":
+            return "On"
+
+    def auto_pid_on(self):
+        "Turn on the auto pid for temperature control"
+        self.resource.query("L1")
+        self.auto_pid = True
+
+    def auto_pid_off(self):
+        "Turn off the auto pid for temperature control"
+        self.resource.query("L0")
+        self.auto_pid = False
+
+    def get_auto_pid_status(self):
+        "Get the status of the auto pid setting"
+        status_byte = self.resource.query("X")
+        if status_byte == 'ERROR':
+            status_byte = self.resource.query("XL")
+
+        sensor_nr = status_byte.split("L")[-1][0]
+
+        if sensor_nr == "0":
+            return "Off"
+        elif sensor_nr == "1":
+            return "On"
+
+    def set_heater_output(self, output):
+        "Set the heater output manually"
+        if not isinstance(output, (float, int)):
+            raise TypeError("The output provided needs to be a float "
+                            "or an int.")
+        self.resource.query("O{:.1f}".format(output))
+
+    def get_heater_output(self):
+        "Get the current heater output"
+        heater_output_str = self.resource.query("R5")
+        heater_output_flt = float(heater_output_str.lstrip("R"))
+        return heater_output_flt
+
+    def get_all_temperatures(self):
+        "Get all temperatures from all three sensors."
+        TSorp = self.get_tsorp()
+        THe3 = self.get_the3()
+        T1K = self.get_t1k()
+        return (TSorp, THe3, T1K)
+
+
+class ITCMeasurementThread(threading.Thread):
+
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs={},
+                 daemon=None, device=None):
+        super(ITCMeasurementThread, self).__init__(group=group, target=target,
+                                                   name=name, args=args,
+                                                   kwargs=kwargs,
+                                                   daemon=daemon)
+        self.stop = False
+        self.device = device
+
+    def run(self):
+        while not self.stop:
+            time.sleep(0.1)
+            print(self.device.get_all_temperatures())
+
+    def stop_thread(self):
+        self.stop = True
 
 
 def main():
-    print("{}@sim".format(DEVPATH))
+
     rm = visa.ResourceManager("{}@sim".format(DEVPATH))
     itc01 = ITCDevice()
     for resource in rm.list_resources():
-        print(resource)
         if "GPIB" in resource:
             itc01.set_resource(rm.open_resource)
 
-    print(itc01.auto_pid_on())
-    print(itc01.get_auto_heat_status())
+    itc_thread = ITCMeasurementThread(name='TestThread-01', device=itc01)
+    itc_thread.start()
+    time.sleep(0.5)
+    itc_thread.stop_thread()
 
 if __name__ == "__main__":
     main()

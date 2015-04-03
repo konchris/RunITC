@@ -74,6 +74,28 @@ devices:
         specs:
           valid: [0, 1, 2, 3]
           type: int
+      auto_pid:
+        default: 0
+        getter:
+          q: "XL"
+          r: "XnAnCnSnnHnL{:d}"
+        setter:
+          q: "L{:d}"
+        specs:
+          valid: [0, 1]
+          type: int
+      heater_output:
+        default: 0.0
+        getter:
+          q: "R5"
+          r: "R{:.1f}"
+        setter:
+          q: "O{:.1f}"
+          r: "O"
+        specs:
+          min: 0.0
+          max: 99.9
+          type: float
 resources:
   GPIB1::24::INSTR:
     device: ITC503
