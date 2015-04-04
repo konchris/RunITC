@@ -149,15 +149,16 @@ class ITCDevice(object):
 
 class ITCMeasurementThread(Thread):
 
-    def __init__(self, device, q):
+    def __init__(self, device, q, delay=0.1):
         super(ITCMeasurementThread, self).__init__()
         self.stop = False
         self.device = device
         self.q = q
+        self.delay = delay
 
     def run(self):
         while not self.stop:
-            time.sleep(0.1)
+            time.sleep(self.delay)
             temps = self.device.get_all_temperatures()
             self.q.put(temps)
 
