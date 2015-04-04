@@ -1,10 +1,11 @@
 import unittest
 import visa
 import pyvisa
-
+import time
+from queue import Queue
 from datetime import datetime
 
-from RunMeas.ITCDevice import ITCDevice
+from RunMeas.ITCDevice import ITCDevice, ITCMeasurementThread
 
 DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
 
@@ -104,6 +105,35 @@ class ThreadTestCase(unittest.TestCase):
         for resource_address in self.rm.list_resources():
             if 'GPIB' in resource_address:
                 self.itc01.set_resource(self.rm.open_resource)
+
+        self.itc_queue = Queue()
+
+        self.delay = 0.1
+
+        self.itc_thread = ITCMeasurementThread(self.itc01, self.itc_queue,
+                                               delay=self.delay)
+
+    def test_thread_start_stop(self):
+        self.assertFalse(self.itc_thread.is_alive())
+        self.itc_thread.start()
+        self.assertTrue(self.itc_thread.is_alive())
+        self.itc_thread.stop_thread()
+        self.itc_thread.join()
+        # time.sleep(0.01)
+        self.assertFalse(self.itc_thread.is_alive())
+
+    def test_number_elements_in_queue(self):
+        wait = 5
+        self.assertTrue(self.itc_queue.empty())
+        self.itc_thread.start()
+        time.sleep(wait*self.delay)
+        self.itc_thread.stop_thread()
+        self.itc_thread.join()
+        i = 0
+        while not self.itc_queue.empty():
+            self.itc_queue.get()
+            i += 1
+        self.assertEqual(i, wait)
 
 
 if __name__ == "__main__":
