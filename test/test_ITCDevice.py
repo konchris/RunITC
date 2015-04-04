@@ -2,6 +2,8 @@ import unittest
 import visa
 import pyvisa
 
+from datetime import datetime
+
 from RunITC.ITCDevice import ITCDevice
 
 DEVPATH = '/home/chris/Programming/github/RunITC/test/devices.yaml'
@@ -86,7 +88,8 @@ class DeviceTestCase(unittest.TestCase):
 
     def test_get_all_temperatures(self):
         "Test getting all temperatures from all three sensors"
-        (TSorp, THe3, T1K) = self.itc01.get_all_temperatures()
+        (datetimestamp, TSorp, THe3, T1K) = self.itc01.get_all_temperatures()
+        self.assertIsInstance(datetimestamp, datetime)
         self.assertEqual(TSorp, 249.2)
         self.assertEqual(THe3, 7.000)
         self.assertEqual(T1K, 7.000)
@@ -101,8 +104,6 @@ class ThreadTestCase(unittest.TestCase):
         for resource_address in self.rm.list_resources():
             if 'GPIB' in resource_address:
                 self.itc01.set_resource(self.rm.open_resource)
-
-        self.thread = ITCMeasurementThread(name='TestThread')
 
 
 if __name__ == "__main__":

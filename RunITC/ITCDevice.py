@@ -7,7 +7,9 @@
 
 import visa
 import time
-import threading
+from datetime import datetime
+from threading import Thread
+from queue import Queue
 
 DEVPATH = '/home/chris/Programming/github/RunITC/test/devices.yaml'
 
@@ -138,27 +140,26 @@ class ITCDevice(object):
 
     def get_all_temperatures(self):
         "Get all temperatures from all three sensors."
+        now = datetime.now()
         TSorp = self.get_tsorp()
         THe3 = self.get_the3()
         T1K = self.get_t1k()
-        return (TSorp, THe3, T1K)
+        return (now, TSorp, THe3, T1K)
 
 
-class ITCMeasurementThread(threading.Thread):
+class ITCMeasurementThread(Thread):
 
-    def __init__(self, group=None, target=None, name=None, args=(), kwargs={},
-                 daemon=None, device=None):
-        super(ITCMeasurementThread, self).__init__(group=group, target=target,
-                                                   name=name, args=args,
-                                                   kwargs=kwargs,
-                                                   daemon=daemon)
+    def __init__(self, device, q):
+        super(ITCMeasurementThread, self).__init__()
         self.stop = False
         self.device = device
+        self.q = q
 
     def run(self):
         while not self.stop:
             time.sleep(0.1)
-            print(self.device.get_all_temperatures())
+            temps = self.device.get_all_temperatures()
+            self.q.put(temps)
 
     def stop_thread(self):
         self.stop = True
@@ -172,10 +173,14 @@ def main():
         if "GPIB" in resource:
             itc01.set_resource(rm.open_resource)
 
-    itc_thread = ITCMeasurementThread(name='TestThread-01', device=itc01)
+    itc_queue = Queue()
+
+    itc_thread = ITCMeasurementThread(itc01, itc_queue)
     itc_thread.start()
     time.sleep(0.5)
     itc_thread.stop_thread()
+    while not itc_queue.empty():
+        print(itc_queue.get())
 
 if __name__ == "__main__":
     main()
