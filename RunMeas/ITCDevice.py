@@ -11,7 +11,7 @@ from datetime import datetime
 from threading import Thread
 from queue import Queue
 
-DEVPATH = '/home/chris/Programming/github/RunITC/test/devices.yaml'
+DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
 
 SENSORS = {"1": "TSorp", "2": "THe3", "3": "T1K"}
 

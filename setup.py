@@ -5,7 +5,7 @@ import codecs
 import os
 import sys
 
-import RunITC
+import RunMeas
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -34,9 +34,9 @@ class PyTest(TestCommand):
         sys.exit(errcode)
 
 setup(
-    name='RunITC',
-    version=RunITC.__version__,
-    url='http://github.com/konchris/RunITC/',
+    name='RunMeas',
+    version=RunMeas.__version__,
+    url='http://github.com/konchris/RunMeas/',
     license='GNU GPLv2',
     author='Christopher Espy',
     tests_require=['pytest'],
@@ -46,17 +46,17 @@ setup(
     cmdclass={'test': PyTest},
     # entry_points={
     #     'gui_scripts': [
-    #         'runitc = RunITC.runitc:main'
+    #         'runmeas = RunMeas.runmeas:main'
     #         ]
     #     },
-    scripts=['RunITC/runitc.py'],
+    scripts=['RunMeas/runmeas.py'],
     author_email='github@konchris.de',
     description="Tool for running an Oxford Instruments ITC 503",
     long_description=long_description,
-    packages=['RunITC'],
+    packages=['RunMeas'],
     include_package_data=True,
     platforms='any',
-    test_suite='RunITC.test.test_runitc.py',
+    test_suite='RunMeas.test.test_runmeas.py',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Win32 (MS Windows)',
