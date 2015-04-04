@@ -4,9 +4,9 @@ import pyvisa
 
 from datetime import datetime
 
-from RunITC.ITCDevice import ITCDevice
+from RunMeas.ITCDevice import ITCDevice
 
-DEVPATH = '/home/chris/Programming/github/RunITC/test/devices.yaml'
+DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
 
 
 class DeviceTestCase(unittest.TestCase):
