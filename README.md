@@ -1,2 +1,3 @@
-# RunITC
-Python scripts for collecting data from and controlling an Oxford Instruments ITC 503
+# RunMeas
+RunMeas will be (is) a collection of Python scripts for running
+measurements and collecting measurement data.
