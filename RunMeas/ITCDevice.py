@@ -149,11 +149,11 @@ class ITCDevice(object):
 
 class ITCMeasurementThread(Thread):
 
-    def __init__(self, device, q, delay=0.1):
+    def __init__(self, device, delay=0.1):
         super(ITCMeasurementThread, self).__init__()
         self.stop = False
         self.device = device
-        self.q = q
+        self.q = Queue()
         self.delay = delay
 
     def run(self):
@@ -174,14 +174,12 @@ def main():
             itc01 = ITCDevice(resource_address)
             itc01.set_resource(rm.open_resource)
 
-    itc_queue = Queue()
-
-    itc_thread = ITCMeasurementThread(itc01, itc_queue)
+    itc_thread = ITCMeasurementThread(itc01, Queue())
     itc_thread.start()
     time.sleep(0.5)
     itc_thread.stop_thread()
-    while not itc_queue.empty():
-        print(itc_queue.get())
+    while not itc_thread.q.empty():
+        print(itc_thread.q.get())
 
 if __name__ == "__main__":
     main()

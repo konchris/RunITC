@@ -30,11 +30,11 @@ class MockDevice(object):
 
 class MockDeviceMeasurementThread(Thread):
 
-    def __init__(self, device, q, delay=0.1):
+    def __init__(self, device, delay=0.1):
         super(MockDeviceMeasurementThread, self).__init__()
         self.stop = False
         self.device = device
-        self.q = q
+        self.q = Queue()
         self.delay = delay
 
     def run(self):
@@ -56,28 +56,19 @@ class BufferTestCase(unittest.TestCase):
         self.itc01 = MockDevice('1')
         self.itc01.set_resource(MockResource)
 
-        self.itc01_queue = Queue()
-
         self.itc01_thread = MockDeviceMeasurementThread(self.itc01,
-                                                        self.itc01_queue,
                                                         delay=self.delay)
 
         self.itc02 = MockDevice('2')
         self.itc02.set_resource(MockResource)
 
-        self.itc02_queue = Queue()
-
         self.itc02_thread = MockDeviceMeasurementThread(self.itc02,
-                                                        self.itc02_queue,
                                                         delay=self.delay)
 
-        self.buffer = Buffer([('Mock Device 01', self.itc01, self.itc01_thread,
-                               self.itc01_queue),
-                              ('Mock Device 02', self.itc02, self.itc02_thread,
-                               self.itc02_queue)])
-
-        self.itc01_thread.start()
-        self.itc02_thread.start()
+        self.buffer = Buffer([('Mock Device 01', self.itc01,
+                               self.itc01_thread),
+                              ('Mock Device 02', self.itc02,
+                               self.itc02_thread)])
 
     def test_buffer_init_creates_devices_dictionary(self):
         delay = 0.01
@@ -85,23 +76,15 @@ class BufferTestCase(unittest.TestCase):
         itc01 = MockDevice('1')
         itc01.set_resource(MockResource)
 
-        itc01_queue = Queue()
-
         itc01_thread = MockDeviceMeasurementThread(itc01,
-                                                   itc01_queue,
                                                    delay=delay)
 
-        my_buffer = Buffer([('Mock Device 01', itc01, itc01_thread,
-                             itc01_queue)
+        my_buffer = Buffer([('Mock Device 01', itc01, itc01_thread)
                             ])
         self.assertIsInstance(my_buffer.devices, dict)
         self.assertIn('Mock Device 01', my_buffer.devices)
 
         self.assertIsInstance(my_buffer.devices['Mock Device 01'], dict)
-
-        self.assertIn('queue', my_buffer.devices['Mock Device 01'])
-        self.assertIsInstance(my_buffer.devices['Mock Device 01']['queue'],
-                              Queue)
 
         self.assertIn('device', my_buffer.devices['Mock Device 01'])
         self.assertIsInstance(my_buffer.devices['Mock Device 01']['device'],
@@ -125,14 +108,10 @@ class BufferTestCase(unittest.TestCase):
         itc01 = MockDevice('1')
         itc01.set_resource(MockResource)
 
-        itc01_queue = Queue()
-
         itc01_thread = MockDeviceMeasurementThread(itc01,
-                                                   itc01_queue,
                                                    delay=delay)
 
-        my_buffer = Buffer([('Mock Device 01', itc01, itc01_thread,
-                             itc01_queue)
+        my_buffer = Buffer([('Mock Device 01', itc01, itc01_thread)
                             ])
         self.assertIsInstance(my_buffer.collection_threads, list)
         self.assertTrue(my_buffer.collection_threads)
@@ -143,10 +122,6 @@ class BufferTestCase(unittest.TestCase):
         self.assertTrue('device' in
                         self.buffer.devices['Mock Device 01'].keys())
         self.assertTrue(self.buffer.devices['Mock Device 01']['device']
-                        is not None)
-        self.assertTrue('queue' in
-                        self.buffer.devices['Mock Device 01'].keys())
-        self.assertTrue(self.buffer.devices['Mock Device 01']['queue']
                         is not None)
         self.assertTrue('thread' in
                         self.buffer.devices['Mock Device 01'].keys())
@@ -159,17 +134,14 @@ class BufferTestCase(unittest.TestCase):
         self.buffer.stop_collection()
 
     def test_buffer_stop_all_devices(self):
+        self.itc01_thread.start()
+        self.itc02_thread.start()
         self.assertTrue(self.itc01_thread.is_alive())
-        self.buffer.stop_all_devices()
+        self.buffer._stop_all_devices()
         for dev_name, dev_dict in self.buffer.devices.items():
             dev_dict['thread'].join()
             self.assertFalse(dev_dict['thread'].is_alive())
-
-    def tearDown(self):
-        if self.itc01_thread.is_alive():
-            self.itc01_thread.stop_thread()
-        if self.itc02_thread.is_alive():
-            self.itc02_thread.stop_thread()
+        self.assertFalse(self.itc01_thread.is_alive())
 
 if __name__ == "__main__":
     unittest.main()

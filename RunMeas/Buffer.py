@@ -43,16 +43,15 @@ class Buffer(object):
         d = {}
 
         for dev in devices:
-            (dev_name, dev_obj, dev_thread, dev_queue) = dev
-            d[dev_name] = {'device': dev_obj, 'thread': dev_thread,
-                           'queue': dev_queue}
+            (dev_name, dev_obj, dev_thread) = dev
+            d[dev_name] = {'device': dev_obj, 'thread': dev_thread}
 
         return d
 
     def _generate_collection_threads(self):
         col_ts = []
         for dev_name, dev_obj in self.devices.items():
-            t = BufferCollectionThread(dev_name, dev_obj['queue'])
+            t = BufferCollectionThread(dev_name, dev_obj['thread'].q)
             col_ts.append(t)
         return col_ts
 
@@ -73,7 +72,9 @@ class Buffer(object):
             t.stop_thread()
             t.join()
 
-    def stop_all_devices(self):
+        self._stop_all_devices()
+
+    def _stop_all_devices(self):
         for k, v in self.devices.items():
             if v['thread'].is_alive():
                 print('Stopping device thread: {}'.format(k))

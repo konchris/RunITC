@@ -116,12 +116,12 @@ class ThreadTestCase(unittest.TestCase):
                 self.itc01 = ITCDevice(resource_address)
                 self.itc01.set_resource(self.rm.open_resource)
 
-        self.itc_queue = Queue()
-
         self.delay = 0.1
 
-        self.itc_thread = ITCMeasurementThread(self.itc01, self.itc_queue,
-                                               delay=self.delay)
+        self.itc_thread = ITCMeasurementThread(self.itc01, delay=self.delay)
+
+    def test_thread_has_queue(self):
+        self.assertIsInstance(self.itc_thread.q, Queue)
 
     def test_thread_start_stop(self):
         self.assertFalse(self.itc_thread.is_alive())
@@ -133,14 +133,14 @@ class ThreadTestCase(unittest.TestCase):
 
     def test_number_elements_in_queue(self):
         wait = 5
-        self.assertTrue(self.itc_queue.empty())
+        self.assertTrue(self.itc_thread.q.empty())
         self.itc_thread.start()
         time.sleep(wait*self.delay)
         self.itc_thread.stop_thread()
         self.itc_thread.join()
         i = 0
-        while not self.itc_queue.empty():
-            self.itc_queue.get()
+        while not self.itc_thread.q.empty():
+            self.itc_thread.q.get()
             i += 1
         self.assertEqual(i, wait)
 
