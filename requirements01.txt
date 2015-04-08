@@ -2,7 +2,6 @@
 PyVISA==1.6.3
 PyVISA-sim==0.1
 PyYAML==3.11
--e git+git@github.com:konchris/RunMeas.git@156af972b2739b0ad484b20faeb9bb381f6c3e0a#egg=RunMeas-origin/HEAD
 numpy==1.9.2
 pandas==0.16.0
 py==1.4.26
