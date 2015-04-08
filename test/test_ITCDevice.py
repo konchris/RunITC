@@ -14,11 +14,21 @@ class DeviceTestCase(unittest.TestCase):
     """Test the device class."""
 
     def setUp(self):
-        self.rm = visa.ResourceManager('{}@sim'.format(DEVPATH))
-        self.itc01 = ITCDevice()
-        for resource_address in self.rm.list_resources():
-            if 'GPIB' in resource_address:
-                self.itc01.set_resource(self.rm.open_resource)
+        rm = visa.ResourceManager('{}@sim'.format(DEVPATH))
+        for resource_address in rm.list_resources():
+            if 'GPIB' in resource_address and '24' in resource_address:
+                self.itc01 = ITCDevice(resource_address)
+                self.itc01.set_resource(rm.open_resource)
+
+    def test_create_itc_device(self):
+        rm = visa.ResourceManager('{}@sim'.format(DEVPATH))
+        for resource_address in rm.list_resources():
+            print(resource_address)
+            if 'GPIB' in resource_address and '24' in resource_address:
+                itc01 = ITCDevice(resource_address)
+                itc01.set_resource(rm.open_resource)
+        self.assertIsInstance(itc01.resource,
+                              pyvisa.resources.gpib.GPIBInstrument)
 
     def test_device_has_gpib_resource(self):
         """Make sure the devices resource is a gpib resource."""
@@ -101,9 +111,9 @@ class ThreadTestCase(unittest.TestCase):
 
     def setUp(self):
         self.rm = visa.ResourceManager('{}@sim'.format(DEVPATH))
-        self.itc01 = ITCDevice()
         for resource_address in self.rm.list_resources():
             if 'GPIB' in resource_address:
+                self.itc01 = ITCDevice(resource_address)
                 self.itc01.set_resource(self.rm.open_resource)
 
         self.itc_queue = Queue()
@@ -119,7 +129,6 @@ class ThreadTestCase(unittest.TestCase):
         self.assertTrue(self.itc_thread.is_alive())
         self.itc_thread.stop_thread()
         self.itc_thread.join()
-        # time.sleep(0.01)
         self.assertFalse(self.itc_thread.is_alive())
 
     def test_number_elements_in_queue(self):

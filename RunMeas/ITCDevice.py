@@ -18,7 +18,7 @@ SENSORS = {"1": "TSorp", "2": "THe3", "3": "T1K"}
 
 class ITCDevice(object):
 
-    def __init__(self, address="GPIB1::24::INSTR", read_term="\r",
+    def __init__(self, address, read_term="\r",
                  write_term="\r"):
         super(ITCDevice, self).__init__()
         self.resource = None
@@ -29,7 +29,7 @@ class ITCDevice(object):
         self.auto_heat = False
         self.auto_pid = False
 
-    def set_resource(self, resource):
+    def set_resource(self, resource, resource_address=None):
         self.resource = resource(self.address,
                                  read_termination=self.read_term,
                                  write_termination=self.write_term)
@@ -169,9 +169,9 @@ class ITCMeasurementThread(Thread):
 def main():
 
     rm = visa.ResourceManager("{}@sim".format(DEVPATH))
-    itc01 = ITCDevice()
-    for resource in rm.list_resources():
-        if "GPIB" in resource:
+    for resource_address in rm.list_resources():
+        if 'GPIB' in resource_address and '24' in resource_address:
+            itc01 = ITCDevice(resource_address)
             itc01.set_resource(rm.open_resource)
 
     itc_queue = Queue()
