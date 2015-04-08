@@ -174,7 +174,7 @@ def main():
             itc01 = ITCDevice(resource_address)
             itc01.set_resource(rm.open_resource)
 
-    itc_thread = ITCMeasurementThread(itc01, Queue())
+    itc_thread = ITCMeasurementThread(itc01)
     itc_thread.start()
     time.sleep(0.5)
     itc_thread.stop_thread()

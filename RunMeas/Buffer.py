@@ -84,7 +84,6 @@ class Buffer(object):
 def main():
 
     import visa
-    from queue import Queue
 
     from ITCDevice import ITCDevice, ITCMeasurementThread
 
@@ -102,17 +101,13 @@ def main():
     print(itc01.address)
     print(itc02.address)
 
-    itc01_queue = Queue()
-    itc02_queue = Queue()
-
-    itc01_thread = ITCMeasurementThread(itc01, itc01_queue, delay=0.1)
-    itc02_thread = ITCMeasurementThread(itc02, itc02_queue, delay=0.2)
-    my_buffer = Buffer([('ITC1 Queue', itc01, itc01_thread, itc01_queue),
-                        ('ITC2 Queue', itc02, itc02_thread, itc02_queue)])
+    itc01_thread = ITCMeasurementThread(itc01, delay=0.1)
+    itc02_thread = ITCMeasurementThread(itc02, delay=0.2)
+    my_buffer = Buffer([('ITC1 Queue', itc01, itc01_thread),
+                        ('ITC2 Queue', itc02, itc02_thread)])
     my_buffer.start_collection()
     time.sleep(1)
     my_buffer.stop_collection()
-    my_buffer.stop_all_devices()
 
 if __name__ == "__main__":
     main()
