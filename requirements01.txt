@@ -1,2 +1,13 @@
+## The following requirements were added by pip --freeze:
+PyVISA==1.6.3
+PyVISA-sim==0.1
+PyYAML==3.11
+-e git+git@github.com:konchris/RunMeas.git@156af972b2739b0ad484b20faeb9bb381f6c3e0a#egg=RunMeas-origin/HEAD
+numpy==1.9.2
+pandas==0.16.0
 py==1.4.26
 pytest==2.7.0
+python-dateutil==2.4.2
+pytz==2015.2
+six==1.9.0
+stringparser==0.4.1
