@@ -38,19 +38,19 @@ class ITCDevice(object):
         "Get the temperature at the sorption pump."
         tsorp_str = self.resource.query("R1")
         tsorp_flt = float(tsorp_str.lstrip("R"))
-        return tsorp_flt
+        return ('TSorp', tsorp_flt)
 
     def get_the3(self):
         "Get the temperature at the sorption pump."
         the3_str = self.resource.query("R2")
         the3_flt = float(the3_str.lstrip("R"))
-        return the3_flt
+        return ('THe3', the3_flt)
 
     def get_t1k(self):
         "Get the temperature at the sorption pump."
         t1k_str = self.resource.query("R3")
         t1k_flt = float(t1k_str.lstrip("R"))
-        return t1k_flt
+        return ('T1K', t1k_flt)
 
     def _set_heater_to_tsrop(self):
         "Set the heater to the sorption pump"
@@ -78,7 +78,7 @@ class ITCDevice(object):
         "Get the setpoint of the sorption pump heater."
         setpoint_str = self.resource.query("R0")
         setpoint_flt = float(setpoint_str.lstrip("R"))
-        return setpoint_flt
+        return ('Setpoint', setpoint_flt)
 
     def auto_heat_on(self):
         "Turn on the auto heat control."
@@ -98,9 +98,9 @@ class ITCDevice(object):
         sensor_nr = sensor_nr.split("A")[-1][0]
 
         if sensor_nr == "0":
-            return "Off"
+            return ('AutoHeat', "Off")
         elif sensor_nr == "1":
-            return "On"
+            return ('AutoHeat', "On")
 
     def auto_pid_on(self):
         "Turn on the auto pid for temperature control"
@@ -121,9 +121,9 @@ class ITCDevice(object):
         sensor_nr = status_byte.split("L")[-1][0]
 
         if sensor_nr == "0":
-            return "Off"
+            return ('AutoPID', "Off")
         elif sensor_nr == "1":
-            return "On"
+            return ('AutoPID', "On")
 
     def set_heater_output(self, output):
         "Set the heater output manually"
@@ -136,7 +136,7 @@ class ITCDevice(object):
         "Get the current heater output"
         heater_output_str = self.resource.query("R5")
         heater_output_flt = float(heater_output_str.lstrip("R"))
-        return heater_output_flt
+        return ('HeaterOutput', heater_output_flt)
 
     def get_all_temperatures(self):
         "Get all temperatures from all three sensors."
@@ -149,12 +149,13 @@ class ITCDevice(object):
 
 class ITCMeasurementThread(Thread):
 
-    def __init__(self, device, delay=0.1):
+    def __init__(self, device, chan_list, delay=0.1):
         super(ITCMeasurementThread, self).__init__()
         self.stop = False
         self.device = device
         self.q = Queue()
         self.delay = delay
+        self.chan_list = chan_list
 
     def run(self):
         while not self.stop:
@@ -174,7 +175,7 @@ def main():
             itc01 = ITCDevice(resource_address)
             itc01.set_resource(rm.open_resource)
 
-    itc_thread = ITCMeasurementThread(itc01)
+    itc_thread = ITCMeasurementThread(itc01, ['TSorp', 'THe3', 'T1K'])
     itc_thread.start()
     time.sleep(0.5)
     itc_thread.stop_thread()

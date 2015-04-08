@@ -4,6 +4,8 @@ import time
 from datetime import datetime
 from queue import Queue
 from threading import Thread
+import numpy as np
+from pandas import DataFrame
 
 from RunMeas.Buffer import Buffer
 
@@ -25,17 +27,18 @@ class MockDevice(object):
 
     def get_values(self):
         now = datetime.now()
-        return (now, 42)
+        return (now, ('value', 42))
 
 
 class MockDeviceMeasurementThread(Thread):
 
-    def __init__(self, device, delay=0.1):
+    def __init__(self, device, chan_list, delay=0.1):
         super(MockDeviceMeasurementThread, self).__init__()
         self.stop = False
         self.device = device
         self.q = Queue()
         self.delay = delay
+        self.chan_list = chan_list
 
     def run(self):
         while not self.stop:
@@ -57,12 +60,14 @@ class BufferTestCase(unittest.TestCase):
         self.itc01.set_resource(MockResource)
 
         self.itc01_thread = MockDeviceMeasurementThread(self.itc01,
+                                                        ['value'],
                                                         delay=self.delay)
 
         self.itc02 = MockDevice('2')
         self.itc02.set_resource(MockResource)
 
         self.itc02_thread = MockDeviceMeasurementThread(self.itc02,
+                                                        ['value'],
                                                         delay=self.delay)
 
         self.buffer = Buffer([('Mock Device 01', self.itc01,
@@ -77,6 +82,7 @@ class BufferTestCase(unittest.TestCase):
         itc01.set_resource(MockResource)
 
         itc01_thread = MockDeviceMeasurementThread(itc01,
+                                                   ['value'],
                                                    delay=delay)
 
         my_buffer = Buffer([('Mock Device 01', itc01, itc01_thread)
@@ -109,6 +115,7 @@ class BufferTestCase(unittest.TestCase):
         itc01.set_resource(MockResource)
 
         itc01_thread = MockDeviceMeasurementThread(itc01,
+                                                   ['value'],
                                                    delay=delay)
 
         my_buffer = Buffer([('Mock Device 01', itc01, itc01_thread)
@@ -142,6 +149,22 @@ class BufferTestCase(unittest.TestCase):
             dev_dict['thread'].join()
             self.assertFalse(dev_dict['thread'].is_alive())
         self.assertFalse(self.itc01_thread.is_alive())
+
+    def test_buffer_data_structure(self):
+        self.buffer.start_collection()
+        time.sleep(0.1)
+        self.buffer.stop_collection()
+        self.assertIsInstance(self.buffer.data, dict)
+        self.assertIsInstance(self.buffer.data['Mock Device 01'], dict)
+        self.assertIn('timestamp', self.buffer.data['Mock Device 01'])
+        self.assertIsInstance(self.buffer.data['Mock Device 01']['timestamp'],
+                              np.ndarray)
+        self.assertIsInstance(self.buffer.data['Mock Device 01']
+                              ['timestamp'][0],
+                              np.datetime64)
+        self.assertIn('value', self.buffer.data['Mock Device 01'])
+        self.assertIsInstance(self.buffer.data['Mock Device 01']['value'],
+                              np.ndarray)
 
 if __name__ == "__main__":
     unittest.main()

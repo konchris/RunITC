@@ -6,22 +6,34 @@
 """
 
 import time
+from datetime import datetime
 from threading import Thread
-
+import numpy as np
+import pandas as pd
 
 class BufferCollectionThread(Thread):
 
-    def __init__(self, name, q, delay=0.2):
+    def __init__(self, name, q, dev_data, delay=0.2):
         super(BufferCollectionThread, self).__init__()
         self.name = name
         self.q = q
         self.delay = delay
         self.stop = False
+        self.dev_data = dev_data
 
     def run(self):
         while not self.stop:
             vals = self.q.get()
-            print(self.name, vals)
+            if type(vals[0]) is datetime:
+                self.dev_data['timestamp'] = np.append(
+                    self.dev_data['timestamp'], np.datetime64(vals[0]))
+                for val in vals[1:]:
+                    self.dev_data[val[0]] = np.append(
+                        self.dev_data[val[0]], val[1])
+            else:
+                for val in vals:
+                    print(val)
+                # print(self.name, vals)
 
     def stop_thread(self):
         self.stop = True
@@ -37,6 +49,7 @@ class Buffer(object):
             raise TypeError("Each unit of the devices list need to be a tuple")
 
         self.devices = self._generate_device_dictionary(devices)
+        self.data = self._generate_data_dictionary()
         self.collection_threads = self._generate_collection_threads()
 
     def _generate_device_dictionary(self, devices):
@@ -51,9 +64,21 @@ class Buffer(object):
     def _generate_collection_threads(self):
         col_ts = []
         for dev_name, dev_obj in self.devices.items():
-            t = BufferCollectionThread(dev_name, dev_obj['thread'].q)
+            t = BufferCollectionThread(dev_name, dev_obj['thread'].q,
+                                       self.data[dev_name], delay=0.01)
             col_ts.append(t)
         return col_ts
+
+    def _generate_data_dictionary(self):
+        d = {}
+
+        for dev_name in self.devices.keys():
+            d[dev_name] = {}
+            d[dev_name]['timestamp'] = np.array([], dtype='datetime64[us]')
+            for chan_name in self.devices[dev_name]['thread'].chan_list:
+                d[dev_name][chan_name] = np.array([])
+
+        return d
 
     def start_collection(self):
         # Make sure that all the device threads are started
@@ -62,13 +87,14 @@ class Buffer(object):
             if not v['thread'].is_alive():
                 v['thread'].start()
 
+        # Start the collection threads
         for t in self.collection_threads:
-            print('Starting', t.name)
+            print('Starting collection thread for', t.name)
             t.start()
 
     def stop_collection(self):
         for t in self.collection_threads:
-            print('Stopping', t.name)
+            print('Stopping collection thread for', t.name)
             t.stop_thread()
             t.join()
 
@@ -101,13 +127,21 @@ def main():
     print(itc01.address)
     print(itc02.address)
 
-    itc01_thread = ITCMeasurementThread(itc01, delay=0.1)
-    itc02_thread = ITCMeasurementThread(itc02, delay=0.2)
-    my_buffer = Buffer([('ITC1 Queue', itc01, itc01_thread),
-                        ('ITC2 Queue', itc02, itc02_thread)])
+    itc01_thread = ITCMeasurementThread(itc01, ['TSorp', 'THe3', 'T1K'],
+                                        delay=0.1)
+    itc02_thread = ITCMeasurementThread(itc02, ['TSorp', 'THe3', 'T1K'],
+                                        delay=0.2)
+    my_buffer = Buffer([('ITC1', itc01, itc01_thread),
+                       ('ITC2', itc02, itc02_thread)])
     my_buffer.start_collection()
     time.sleep(1)
     my_buffer.stop_collection()
+
+    df = {}
+    for k, v in my_buffer.data.items():
+        df[k] = pd.DataFrame(data=v)
+        df[k] = df[k].set_index('timestamp')
+        print(df[k])
 
 if __name__ == "__main__":
     main()
