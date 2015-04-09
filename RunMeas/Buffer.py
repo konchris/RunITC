@@ -11,7 +11,36 @@ from threading import Thread
 import numpy as np
 import pandas as pd
 
+
 class BufferCollectionThread(Thread):
+
+    def __init__(self, name, q, dev_data, delay=0.2):
+        super(BufferCollectionThread, self).__init__()
+        self.name = name
+        self.q = q
+        self.delay = delay
+        self.stop = False
+        self.dev_data = dev_data
+
+    def run(self):
+        while not self.stop:
+            vals = self.q.get()
+            if type(vals[0]) is datetime:
+                self.dev_data['timestamp'] = np.append(
+                    self.dev_data['timestamp'], np.datetime64(vals[0]))
+                for val in vals[1:]:
+                    self.dev_data[val[0]] = np.append(
+                        self.dev_data[val[0]], val[1])
+            else:
+                for val in vals:
+                    print(val)
+                # print(self.name, vals)
+
+    def stop_thread(self):
+        self.stop = True
+
+
+class BufferReordThread(Thread):
 
     def __init__(self, name, q, dev_data, delay=0.2):
         super(BufferCollectionThread, self).__init__()
@@ -51,6 +80,7 @@ class Buffer(object):
         self.devices = self._generate_device_dictionary(devices)
         self.data = self._generate_data_dictionary()
         self.collection_threads = self._generate_collection_threads()
+        self.measurement_name = None
 
     def _generate_device_dictionary(self, devices):
         d = {}
@@ -106,6 +136,12 @@ class Buffer(object):
                 print('Stopping device thread: {}'.format(k))
                 v['thread'].stop_thread()
 
+    def start_recording(self):
+        pass
+
+    def stop_recording(self):
+        pass
+
 
 def main():
 
@@ -131,7 +167,7 @@ def main():
     # print(itc02.address)
 
     itc01_thread = ITCMeasurementThread(itc01, ['TSorp', 'THe3', 'T1K'],
-                                        delay=0.5)
+                                        delay=0.1)
     # itc02_thread = ITCMeasurementThread(itc02, ['TSorp', 'THe3', 'T1K'],
     #                                     delay=0.2)
     my_buffer = Buffer([('ITC1', itc01, itc01_thread)])  # ,
@@ -143,11 +179,12 @@ def main():
     df = {}
     for k, v in my_buffer.data.items():
         df[k] = pd.DataFrame(data=v)
-        times = df[k]['timestamp']
-        diff = [times[i+1] - times[i] for i in np.arange(times.count()-1)]
-        print(diff, diff[0])
+        # times = df[k]['timestamp']
+        # diff = [times[i+1] - times[i] for i in np.arange(times.count()-1)]
+        # print(diff, diff[0])
         df[k] = df[k].set_index('timestamp')
         print(df[k])
+        # print(df[k].index)
 
 if __name__ == "__main__":
     main()

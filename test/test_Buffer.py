@@ -166,5 +166,17 @@ class BufferTestCase(unittest.TestCase):
         self.assertIsInstance(self.buffer.data['Mock Device 01']['value'],
                               np.ndarray)
 
+    def test_start_stop_record_thread(self):
+        self.buffer.start_recording()
+        self.assertTrue(self.buffer.record_thread.is_alive())
+        time.sleep(0.1)
+        self.buffer.stop_recording()
+        self.assertFalse(self.buffer.record_thread.is_alive())
+
+    def test_set_measurement_name(self):
+        meas_name = 'Test_Measurement'
+        self.buffer.set_measurement_name(meas_name)
+        self.assertTrue(self.buffer.measurement_name, meas_name)
+
 if __name__ == "__main__":
     unittest.main()
