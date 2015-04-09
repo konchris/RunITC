@@ -5,13 +5,15 @@
 
 """
 
+import os
 import visa
 import time
 from datetime import datetime
 from threading import Thread
 from queue import Queue
 
-DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
+DEVPATH = os.path.join(os.getcwd(), 'test', 'devices.yaml')
+# DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
 
 SENSORS = {"1": "TSorp", "2": "THe3", "3": "T1K"}
 

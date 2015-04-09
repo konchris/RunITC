@@ -109,37 +109,43 @@ class Buffer(object):
 
 def main():
 
+    import os
     import visa
 
     from ITCDevice import ITCDevice, ITCMeasurementThread
 
-    DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
+    DEVPATH = os.path.join(os.getcwd(), 'test', 'devices.yaml')
+    # DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
 
     rm = visa.ResourceManager("{}@sim".format(DEVPATH))
+    # rm = visa.ResourceManager()
     for resource in rm.list_resources():
         if "GPIB" in resource and '24' in resource:
             itc01 = ITCDevice(address=resource)
             itc01.set_resource(rm.open_resource)
-        elif 'GPIB' in resource and '23' in resource:
-            itc02 = ITCDevice(address=resource)
-            itc02.set_resource(rm.open_resource)
+        # elif 'GPIB' in resource and '23' in resource:
+        #     itc02 = ITCDevice(address=resource)
+        #     itc02.set_resource(rm.open_resource)
 
     print(itc01.address)
-    print(itc02.address)
+    # print(itc02.address)
 
     itc01_thread = ITCMeasurementThread(itc01, ['TSorp', 'THe3', 'T1K'],
-                                        delay=0.1)
-    itc02_thread = ITCMeasurementThread(itc02, ['TSorp', 'THe3', 'T1K'],
-                                        delay=0.2)
-    my_buffer = Buffer([('ITC1', itc01, itc01_thread),
-                       ('ITC2', itc02, itc02_thread)])
+                                        delay=0.5)
+    # itc02_thread = ITCMeasurementThread(itc02, ['TSorp', 'THe3', 'T1K'],
+    #                                     delay=0.2)
+    my_buffer = Buffer([('ITC1', itc01, itc01_thread)])  # ,
+    #                   ('ITC2', itc02, itc02_thread)])
     my_buffer.start_collection()
-    time.sleep(1)
+    time.sleep(2)
     my_buffer.stop_collection()
 
     df = {}
     for k, v in my_buffer.data.items():
         df[k] = pd.DataFrame(data=v)
+        times = df[k]['timestamp']
+        diff = [times[i+1] - times[i] for i in np.arange(times.count()-1)]
+        print(diff, diff[0])
         df[k] = df[k].set_index('timestamp')
         print(df[k])
 

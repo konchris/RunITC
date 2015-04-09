@@ -1,3 +1,4 @@
+import os
 import unittest
 import visa
 import pyvisa
@@ -7,7 +8,8 @@ from datetime import datetime
 
 from RunMeas.ITCDevice import ITCDevice, ITCMeasurementThread
 
-DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
+DEVPATH = os.path.join(os.getcwd(), 'test', 'devices.yaml')
+# DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
 
 
 class DeviceTestCase(unittest.TestCase):
