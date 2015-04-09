@@ -5,6 +5,7 @@
 
 """
 
+import os
 import time
 from datetime import datetime
 from threading import Thread
@@ -40,29 +41,43 @@ class BufferCollectionThread(Thread):
         self.stop = True
 
 
-class BufferReordThread(Thread):
+class BufferRecordThread(Thread):
 
-    def __init__(self, name, q, dev_data, delay=0.2):
-        super(BufferCollectionThread, self).__init__()
-        self.name = name
-        self.q = q
+    def __init__(self, dev_data, measurement_name, data_folder, delay=0.1):
+        super(BufferRecordThread, self).__init__()
         self.delay = delay
         self.stop = False
         self.dev_data = dev_data
+        self.meas_name = measurement_name
+        self.data_folder = data_folder
+        self.start_time = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+        print(self.data_folder, self.start_time, self.meas_name)
+        self.file_name = self._generate_file_name()
+
+    def _generate_file_name(self):
+        basename = '_'.join((self.start_time, self.meas_name))
+        fullname = basename + '.h5'
+        assert type(self.data_folder) is str, 'Data folder not string!?'
+        assert type(fullname) is str, 'Full name not string!?'
+        fullpath = os.path.join(self.data_folder, fullname)
+        return fullpath
 
     def run(self):
+
         while not self.stop:
-            vals = self.q.get()
-            if type(vals[0]) is datetime:
-                self.dev_data['timestamp'] = np.append(
-                    self.dev_data['timestamp'], np.datetime64(vals[0]))
-                for val in vals[1:]:
-                    self.dev_data[val[0]] = np.append(
-                        self.dev_data[val[0]], val[1])
-            else:
-                for val in vals:
-                    print(val)
-                # print(self.name, vals)
+            # Sometime the recording thread pulls the data before it has
+            # all been added to the data dictionary. This raises a
+            # ValueError which is caught here.
+            try:
+                df = {}
+                for k, v in self.dev_data.items():
+                    key = 'raw/'+k
+                    df[k] = pd.DataFrame(data=v)
+                    df[k] = df[k].set_index('timestamp')
+                    df[k].to_hdf(self.file_name, key, format='table')
+            except ValueError:
+                pass
+            time.sleep(self.delay)
 
     def stop_thread(self):
         self.stop = True
@@ -81,6 +96,8 @@ class Buffer(object):
         self.data = self._generate_data_dictionary()
         self.collection_threads = self._generate_collection_threads()
         self.measurement_name = None
+        self.record_thread = None
+        self.data_folder = os.path.join(os.getcwd(), 'temp_data')
 
     def _generate_device_dictionary(self, devices):
         d = {}
@@ -137,10 +154,26 @@ class Buffer(object):
                 v['thread'].stop_thread()
 
     def start_recording(self):
-        pass
+        assert type(self.data_folder) is not None
+        self.record_thread = BufferRecordThread(self.data, 'Test_Measurement',
+                                                self.data_folder)
+        self.record_thread.start()
 
     def stop_recording(self):
-        pass
+        self.record_thread.stop_thread()
+        self.record_thread.join()
+
+    def set_measurement_name(self, measurement_name):
+        assert type(measurement_name) is str, ("The measurement name given is "
+                                               "not a string")
+
+        self.measurement_name = measurement_name
+
+    def set_data_folder(self, data_folder):
+        assert type(data_folder) is str, ("The data folder given is "
+                                          "not a string")
+
+        self.data_folder = data_folder
 
 
 def main():
@@ -159,32 +192,38 @@ def main():
         if "GPIB" in resource and '24' in resource:
             itc01 = ITCDevice(address=resource)
             itc01.set_resource(rm.open_resource)
-        # elif 'GPIB' in resource and '23' in resource:
-        #     itc02 = ITCDevice(address=resource)
-        #     itc02.set_resource(rm.open_resource)
+        elif 'GPIB' in resource and '23' in resource:
+            itc02 = ITCDevice(address=resource)
+            itc02.set_resource(rm.open_resource)
 
     print(itc01.address)
-    # print(itc02.address)
+    print(itc02.address)
 
     itc01_thread = ITCMeasurementThread(itc01, ['TSorp', 'THe3', 'T1K'],
                                         delay=0.1)
-    # itc02_thread = ITCMeasurementThread(itc02, ['TSorp', 'THe3', 'T1K'],
-    #                                     delay=0.2)
-    my_buffer = Buffer([('ITC1', itc01, itc01_thread)])  # ,
-    #                   ('ITC2', itc02, itc02_thread)])
+    itc02_thread = ITCMeasurementThread(itc02, ['TSorp', 'THe3', 'T1K'],
+                                        delay=0.1)
+    my_buffer = Buffer([('ITC1', itc01, itc01_thread),
+                        ('ITC2', itc02, itc02_thread)])
+
+    my_buffer.set_data_folder(os.path.join(os.getcwd(), 'temp_data'))
+    print(my_buffer.data_folder)
     my_buffer.start_collection()
-    time.sleep(2)
+    my_buffer.start_recording()
+    time.sleep(1)
+    my_buffer.stop_recording()
     my_buffer.stop_collection()
 
     df = {}
     for k, v in my_buffer.data.items():
+    ##     print('raw/'+k)
         df[k] = pd.DataFrame(data=v)
-        # times = df[k]['timestamp']
-        # diff = [times[i+1] - times[i] for i in np.arange(times.count()-1)]
-        # print(diff, diff[0])
-        df[k] = df[k].set_index('timestamp')
-        print(df[k])
-        # print(df[k].index)
+    ##     # times = df[k]['timestamp']
+    ##     # diff = [times[i+1] - times[i] for i in np.arange(times.count()-1)]
+    ##     # print(diff, diff[0])
+    ##     df[k] = df[k].set_index('timestamp')
+        print(df[k].count())
+    ##     # print(df[k].index)
 
 if __name__ == "__main__":
     main()

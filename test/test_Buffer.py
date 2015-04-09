@@ -1,5 +1,6 @@
 import unittest
 
+import os
 import time
 from datetime import datetime
 from queue import Queue
@@ -7,7 +8,8 @@ from threading import Thread
 import numpy as np
 from pandas import DataFrame
 
-from RunMeas.Buffer import Buffer
+from RunMeas.Buffer import (Buffer, BufferCollectionThread,
+                            BufferRecordThread)
 
 
 class MockResource(object):
@@ -135,7 +137,23 @@ class BufferTestCase(unittest.TestCase):
         self.assertTrue(self.buffer.devices['Mock Device 01']['thread']
                         is not None)
 
-    def test_buffer_start_stop_queue(self):
+    def test_init_buffer_collection_thread(self):
+        name = 'TestCollector'
+        q = Queue()
+        dev_data = {'Device1': {'timestamp': np.array([],
+                                                      dtype='datetime64[us]'),
+                                'channel1': np.array([]),
+                                'channel2': np.array([])}}
+        t = BufferCollectionThread(name, q, dev_data['Device1'],
+                                   delay=0.01)
+        t.start()
+        self.assertTrue(t.is_alive())
+        q.put((datetime.now(), ('channel1', 1.0), ('channel2', 2.0)))
+        t.stop_thread()
+        t.join()
+        self.assertFalse(t.is_alive())
+
+    def test_buffer_start_stop_collection(self):
         self.buffer.start_collection()
         time.sleep(0.1)
         self.buffer.stop_collection()
@@ -166,6 +184,29 @@ class BufferTestCase(unittest.TestCase):
         self.assertIsInstance(self.buffer.data['Mock Device 01']['value'],
                               np.ndarray)
 
+    def test_create_record_thread(self):
+        dev_data = {'Device1': {'timestamp': np.array([1, 2, 3],
+                                                      dtype='datetime64[us]'),
+                                'channel1': np.array([1, 2, 3]),
+                                'channel2': np.array([1, 2, 3])}}
+        meas_name = 'TestMeasurement'
+        data_folder = os.path.join(os.getcwd(), 'temp_data')
+        delay = 0.1
+        t = BufferRecordThread(dev_data, meas_name, data_folder, delay)
+        self.assertTrue(type(t.meas_name) is str)
+        self.assertTrue(type(t.data_folder) is str)
+        self.assertTrue(type(t.file_name) is str)
+        basename = '_'.join((t.start_time, t.meas_name))
+        fullname = basename + '.h5'
+        fullpath = os.path.join(t.data_folder, fullname)
+        self.assertEqual(fullpath, t.file_name)
+        t.start()
+        self.assertTrue(t.is_alive())
+        time.sleep(0.1)
+        t.stop_thread()
+        t.join()
+        self.assertFalse(t.is_alive())
+
     def test_start_stop_record_thread(self):
         self.buffer.start_recording()
         self.assertTrue(self.buffer.record_thread.is_alive())
@@ -176,7 +217,13 @@ class BufferTestCase(unittest.TestCase):
     def test_set_measurement_name(self):
         meas_name = 'Test_Measurement'
         self.buffer.set_measurement_name(meas_name)
-        self.assertTrue(self.buffer.measurement_name, meas_name)
+        self.assertEqual(self.buffer.measurement_name, meas_name)
+
+    def test_set_data_folder(self):
+        data_folder = os.path.join(os.getcwd(), 'temp_data')
+        self.buffer.set_data_folder(data_folder)
+        self.assertEqual(self.buffer.data_folder, data_folder)
+
 
 if __name__ == "__main__":
     unittest.main()
