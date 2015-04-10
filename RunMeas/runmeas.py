@@ -21,7 +21,7 @@ from PyQt4.QtGui import (QApplication)
 
 from RunMeas.ITC_view import MyMainWindow
 
-RESOURCES = {'GPIB1::24::65535::INSTR':
+RESOURCES = {'GPIB1::24':
              {'ITC503': ['timestamp',
                          'TSorp',
                          'THe3',
@@ -116,8 +116,9 @@ def main(argv=None):
 
     devices = []
     for resource in rm.list_resources():
+        addy_prefix = '::'.join(resource.split('::')[:2])
         try:
-            resource_name = list(RESOURCES[resource].keys())[0]
+            resource_name = list(RESOURCES[addy_prefix].keys())[0]
             devices.append(resource_name)
         except KeyError:
             pass
