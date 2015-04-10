@@ -1,12 +1,20 @@
-## The following requirements were added by pip --freeze:
+Cython==0.22
 PyVISA==1.6.3
 PyVISA-sim==0.1
 PyYAML==3.11
+matplotlib==1.4.3
+nose==1.3.6
+numexpr==2.4
 numpy==1.9.2
 pandas==0.16.0
 py==1.4.26
+pyparsing==2.0.3
 pytest==2.7.0
 python-dateutil==2.4.2
 pytz==2015.2
+scipy==0.15.1
+seaborn==0.5.1
 six==1.9.0
 stringparser==0.4.1
+tables==3.1.1
+tzlocal==1.1.3
