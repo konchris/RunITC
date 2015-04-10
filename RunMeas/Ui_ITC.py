@@ -96,4 +96,4 @@ class Ui_MainWindow(object):
         self.action_Quit.setShortcut(_translate("MainWindow", "Ctrl+Q", None))
         self.actionQuit.setText(_translate("MainWindow", "&Quit", None))
 
-import resources_rc
+import RunMeas.resources_rc

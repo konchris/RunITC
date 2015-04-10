@@ -17,7 +17,7 @@ import sys
 
 from PyQt4.QtGui import (QApplication, QMainWindow)
 
-from .Ui_ITC import Ui_MainWindow as MainWindow
+from RunMeas.Ui_ITC import Ui_MainWindow as MainWindow
 
 
 class MyMainWindow(QMainWindow, MainWindow):
