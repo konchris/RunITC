@@ -51,7 +51,7 @@ class BufferRecordThread(Thread):
         self.meas_name = measurement_name
         self.data_folder = data_folder
         self.start_time = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-        print(self.data_folder, self.start_time, self.meas_name)
+        # print(self.data_folder, self.start_time, self.meas_name)
         self.file_name = self._generate_file_name()
 
     def _generate_file_name(self):
@@ -186,31 +186,31 @@ def main():
     DEVPATH = os.path.join(os.getcwd(), 'test', 'devices.yaml')
     # DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
 
-    rm = visa.ResourceManager("{}@sim".format(DEVPATH))
-    # rm = visa.ResourceManager()
+    # rm = visa.ResourceManager("{}@sim".format(DEVPATH))
+    rm = visa.ResourceManager()
     for resource in rm.list_resources():
         if "GPIB" in resource and '24' in resource:
             itc01 = ITCDevice(address=resource)
             itc01.set_resource(rm.open_resource)
-        elif 'GPIB' in resource and '23' in resource:
-            itc02 = ITCDevice(address=resource)
-            itc02.set_resource(rm.open_resource)
+        #elif 'GPIB' in resource and '23' in resource:
+        #    itc02 = ITCDevice(address=resource)
+        #    itc02.set_resource(rm.open_resource)
 
     print(itc01.address)
-    print(itc02.address)
+    #print(itc02.address)
 
     itc01_thread = ITCMeasurementThread(itc01, ['TSorp', 'THe3', 'T1K'],
                                         delay=0.1)
-    itc02_thread = ITCMeasurementThread(itc02, ['TSorp', 'THe3', 'T1K'],
-                                        delay=0.1)
-    my_buffer = Buffer([('ITC1', itc01, itc01_thread),
-                        ('ITC2', itc02, itc02_thread)])
+    #itc02_thread = ITCMeasurementThread(itc02, ['TSorp', 'THe3', 'T1K'],
+    #                                    delay=0.1)
+    my_buffer = Buffer([('ITC1', itc01, itc01_thread)])  # ,
+    #                    ('ITC2', itc02, itc02_thread)])
 
     my_buffer.set_data_folder(os.path.join(os.getcwd(), 'temp_data'))
-    print(my_buffer.data_folder)
+    #print(my_buffer.data_folder)
     my_buffer.start_collection()
     my_buffer.start_recording()
-    time.sleep(1)
+    time.sleep(0.5*60*60)
     my_buffer.stop_recording()
     my_buffer.stop_collection()
 
@@ -222,8 +222,8 @@ def main():
     ##     # diff = [times[i+1] - times[i] for i in np.arange(times.count()-1)]
     ##     # print(diff, diff[0])
     ##     df[k] = df[k].set_index('timestamp')
-        print(df[k].count())
-    ##     # print(df[k].index)
+    ##    print(df[k].index)
+        print(df[k]['timestamp'].count)
 
 if __name__ == "__main__":
     main()
