@@ -25,7 +25,20 @@ RESOURCES = {'GPIB1::24':
              {'ITC503': ['timestamp',
                          'TSorp',
                          'THe3',
-                         'T1K']}}
+                         'T1K']},
+             'GPIB1::28':
+             {'AH': []},
+             'GPIB1::9':
+             {'I_Lockin': []},
+             'GPIB1::17':
+             {'Lakeshore': ['TSample_LS']},
+             'GPIB1::8':
+             {'V_Lockin': []},
+             'GPIB1::3':
+             {'Yokogawa': []},
+             'GPIB::25':
+             {'IPS': ['Magnetfield']}
+             }
 
 
 class Main(MyMainWindow):
