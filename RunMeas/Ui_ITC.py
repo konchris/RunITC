@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ITCUI.ui'
 #
-# Created: Thu Apr  9 20:02:43 2015
+# Created: Fri Apr 10 14:36:48 2015
 #      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -63,26 +63,21 @@ class Ui_MainWindow(object):
         self.tableLayout.setObjectName(_fromUtf8("tableLayout"))
         self.mainLayout.addLayout(self.tableLayout)
         MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
-        self.menubar.setObjectName(_fromUtf8("menubar"))
-        self.menuFile = QtGui.QMenu(self.menubar)
-        self.menuFile.setObjectName(_fromUtf8("menuFile"))
-        MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
         MainWindow.setStatusBar(self.statusbar)
+        self.menubar = QtGui.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
+        self.menubar.setObjectName(_fromUtf8("menubar"))
+        MainWindow.setMenuBar(self.menubar)
         self.action_Quit = QtGui.QAction(MainWindow)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/icons/exit.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.action_Quit.setIcon(icon)
         self.action_Quit.setObjectName(_fromUtf8("action_Quit"))
-        self.actionQuit = QtGui.QAction(MainWindow)
-        self.actionQuit.setObjectName(_fromUtf8("actionQuit"))
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(self.actionQuit)
-        self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QObject.connect(self.action_Quit, QtCore.SIGNAL(_fromUtf8("triggered()")), MainWindow.close)
-        QtCore.QObject.connect(self.actionQuit, QtCore.SIGNAL(_fromUtf8("triggered()")), self.action_Quit.trigger)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -91,9 +86,7 @@ class Ui_MainWindow(object):
         self.recordData.setText(_translate("MainWindow", "Record Data", None))
         self.stopRecording.setText(_translate("MainWindow", "Stop Recording", None))
         self.disconnectDevice.setText(_translate("MainWindow", "Disconnect Device", None))
-        self.menuFile.setTitle(_translate("MainWindow", "File", None))
-        self.action_Quit.setText(_translate("MainWindow", "%Quit", None))
+        self.action_Quit.setText(_translate("MainWindow", "&Quit", None))
         self.action_Quit.setShortcut(_translate("MainWindow", "Ctrl+Q", None))
-        self.actionQuit.setText(_translate("MainWindow", "&Quit", None))
 
 import RunMeas.resources_rc
