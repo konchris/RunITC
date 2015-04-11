@@ -145,7 +145,7 @@ def main(argv=None):
                 if sys.platform == 'win32':
                     resource_addy = addy_prefix + '::INSTR'
                     itc_device = ITCDevice(address=resource_addy)
-                    itc_device.set_resource(rm.open_resource(resource_addy))
+                    itc_device.set_resource(rm.open_resource)
                 elif sys.platform == 'linux':
                     resource_addy = resource
                     itc_device = ITCDevice(address=resource)
