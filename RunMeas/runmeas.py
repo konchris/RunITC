@@ -18,6 +18,10 @@ import sys
 
 import visa
 from PyQt4.QtGui import (QApplication)
+from PyQt4.QtCore import (QTimer)
+
+import numpy as np
+import seaborn as sns
 
 from RunMeas.ITC_view import MyMainWindow
 
@@ -66,6 +70,9 @@ class Presenter(object):
 
         self.fileMenu = None
         self.fileMenuActions = None
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.updateGraph)
 
     def setDeviceList(self, devices):
         """Set the list of available devices.
@@ -116,10 +123,35 @@ class Presenter(object):
     def setBuffer(self, buffer):
         self.buffer = buffer
 
-        self.view.connectDevice.clicked.connect(self.buffer.start_collection)
-        self.view.disconnectDevice.clicked.connect(self.buffer.stop_collection)
+        self.view.connectDevice.clicked.connect(self.startCollection)
+        self.view.disconnectDevice.clicked.connect(self.stopCollection)
         self.view.recordData.clicked.connect(self.buffer.start_recording)
         self.view.stopRecording.clicked.connect(self.buffer.stop_recording)
+
+    def startCollection(self):
+        self.buffer.start_collection()
+        self.timer.start(200)
+
+    def stopCollection(self):
+        self.buffer.stop_collection()
+        self.timer.stop()
+
+    def updateGraph(self):
+
+        x = self.buffer.data['ITC503']['timestamp']
+
+        tsorp = self.buffer.data['ITC503']['TSorp']
+        t1k = self.buffer.data['ITC503']['T1K']
+        the3 = self.buffer.data['ITC503']['THe3']
+
+        self.view.axes1.plot((x-x[0])/np.timedelta64(1, 's'), tsorp,
+                             color=sns.xkcd_rgb['pale red'])
+        self.view.axes2.plot((x-x[0])/np.timedelta64(1, 's'), t1k,
+                             color=sns.xkcd_rgb['medium green'])
+        self.view.axes2.plot((x-x[0])/np.timedelta64(1, 's'), the3,
+                             color=sns.xkcd_rgb['denim blue'])
+
+        self.view.canvas.draw()
 
 
 def main(argv=None):

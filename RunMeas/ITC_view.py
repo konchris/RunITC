@@ -21,10 +21,12 @@ from PyQt4.QtGui import (QApplication, QMainWindow, QSizePolicy, QAction,
 from tzlocal import get_localzone
 import matplotlib as mpl
 from matplotlib.figure import Figure
+from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt4agg import (FigureCanvasQTAgg as
                                                 FigureCanvas)
 from matplotlib.backends.backend_qt4agg import (NavigationToolbar2QT as
                                                 NavigationToolbar)
+
 import seaborn as sns
 
 from RunMeas.Ui_ITC import Ui_MainWindow as MainWindow
@@ -46,13 +48,18 @@ class MyMainWindow(QMainWindow, MainWindow):
         self.setupUi(self)
 
         # Matplotlib canvas
-        fig = Figure(dpi=120)
+        fig, axes1 = plt.subplots()
+        fig.set_dpi(120)
+
+        fig.autofmt_xdate()
 
         self.canvas = FigureCanvas(fig)
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         mpl_toolbar = NavigationToolbar(self.canvas, self.canvas)
 
-        self.axes = fig.add_subplot(111)
+        self.axes1 = axes1
+        self.axes2 = axes1.twinx()
+        self.axes2.grid(False)
 
         self.graphLayout.insertWidget(0, self.canvas)
         self.graphLayout.insertWidget(1, mpl_toolbar)
