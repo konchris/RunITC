@@ -6,6 +6,7 @@
 """
 
 import os
+import sys
 import time
 from datetime import datetime
 from threading import Thread
@@ -186,28 +187,23 @@ def main():
     DEVPATH = os.path.join(os.getcwd(), 'test', 'devices.yaml')
     # DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
 
-    # rm = visa.ResourceManager("{}@sim".format(DEVPATH))
-    rm = visa.ResourceManager()
+    if sys.platform == 'win32':
+        rm = visa.ResourceManager()
+    elif sys.platform == 'linux':
+        rm = visa.ResourceManager("{}@sim".format(DEVPATH))
     for resource in rm.list_resources():
         if "GPIB" in resource and '24' in resource:
             itc01 = ITCDevice(address=resource)
             itc01.set_resource(rm.open_resource)
-        #elif 'GPIB' in resource and '23' in resource:
-        #    itc02 = ITCDevice(address=resource)
-        #    itc02.set_resource(rm.open_resource)
 
     print(itc01.address)
-    #print(itc02.address)
 
     itc01_thread = ITCMeasurementThread(itc01, ['TSorp', 'THe3', 'T1K'],
                                         delay=0.1)
-    #itc02_thread = ITCMeasurementThread(itc02, ['TSorp', 'THe3', 'T1K'],
-    #                                    delay=0.1)
-    my_buffer = Buffer([('ITC1', itc01, itc01_thread)])  # ,
-    #                    ('ITC2', itc02, itc02_thread)])
+    my_buffer = Buffer([('ITC1', itc01, itc01_thread)])
 
     my_buffer.set_data_folder(os.path.join(os.getcwd(), 'temp_data'))
-    #print(my_buffer.data_folder)
+    # print(my_buffer.data_folder)
     my_buffer.start_collection()
     my_buffer.start_recording()
     time.sleep(0.5*60*60)
@@ -216,13 +212,13 @@ def main():
 
     df = {}
     for k, v in my_buffer.data.items():
-    ##     print('raw/'+k)
+        # print('raw/'+k)
         df[k] = pd.DataFrame(data=v)
-    ##     # times = df[k]['timestamp']
-    ##     # diff = [times[i+1] - times[i] for i in np.arange(times.count()-1)]
-    ##     # print(diff, diff[0])
-    ##     df[k] = df[k].set_index('timestamp')
-    ##    print(df[k].index)
+        # times = df[k]['timestamp']
+        # diff = [times[i+1] - times[i] for i in np.arange(times.count()-1)]
+        # print(diff, diff[0])
+        # df[k] = df[k].set_index('timestamp')
+        # print(df[k].index)
         print(df[k]['timestamp'].count)
 
 if __name__ == "__main__":

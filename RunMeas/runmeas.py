@@ -21,23 +21,24 @@ from PyQt4.QtGui import (QApplication)
 
 from RunMeas.ITC_view import MyMainWindow
 
+
 RESOURCES = {'GPIB1::24':
              {'ITC503': ['timestamp',
                          'TSorp',
                          'THe3',
                          'T1K']},
-             'GPIB1::28':
-             {'AH': []},
-             'GPIB1::9':
-             {'I_Lockin': []},
-             'GPIB1::17':
-             {'Lakeshore': ['TSample_LS']},
-             'GPIB1::8':
-             {'V_Lockin': []},
-             'GPIB1::3':
-             {'Yokogawa': []},
-             'GPIB::25':
-             {'IPS': ['Magnetfield']}
+             # 'GPIB1::28':
+             # {'AH': []},
+             # 'GPIB1::9':
+             # {'I_Lockin': []},
+             # 'GPIB1::17':
+             # {'Lakeshore': ['TSample_LS']},
+             # 'GPIB1::8':
+             # {'V_Lockin': []},
+             # 'GPIB1::3':
+             # {'Yokogawa': []},
+             # 'GPIB::25':
+             # {'IPS': ['Magnetfield']}
              }
 
 
@@ -117,6 +118,12 @@ def main(argv=None):
 
     """
 
+    from RunMeas.Buffer import Buffer
+    from RunMeas.ITCDevice import ITCDevice, ITCMeasurementThread
+
+    meas_thread_register = []
+    device_register = []
+
     DEVPATH = os.path.join(os.getcwd(), 'test', 'devices.yaml')
 
     if argv is None:
@@ -128,13 +135,37 @@ def main(argv=None):
         rm = visa.ResourceManager("{}@sim".format(DEVPATH))
 
     devices = []
+    device_register = []
     for resource in rm.list_resources():
         addy_prefix = '::'.join(resource.split('::')[:2])
         try:
             resource_name = list(RESOURCES[addy_prefix].keys())[0]
             devices.append(resource_name)
+            if 'ITC' in resource_name:
+                if sys.platform == 'win32':
+                    resource_addy = addy_prefix + '::INSTR'
+                    itc_device = ITCDevice(address=resource_addy)
+                    itc_device.set_resource(rm.open_resource(resource_addy))
+                elif sys.platform == 'linux':
+                    resource_addy = resource
+                    itc_device = ITCDevice(address=resource)
+                    itc_device.set_resource(rm.open_resource)
+                print(resource_addy)
+                device_register.append((resource_name, itc_device))
+
+                itc_measurement_thread = ITCMeasurementThread(itc_device,
+                                                              ['TSorp', 'THe3',
+                                                               'T1K'],
+                                                              delay=0.1)
+
+                meas_thread_register.append((resource_name, itc_device,
+                                             itc_measurement_thread))
+
         except KeyError:
             pass
+
+    my_buffer = Buffer(meas_thread_register)
+    my_buffer.set_data_folder(os.path.join(os.getcwd(), 'temp_data'))
 
     app = QApplication(argv)
     app.setOrganizationName("RunMeasGmbH")
