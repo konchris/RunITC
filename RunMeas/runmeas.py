@@ -62,6 +62,7 @@ class Presenter(object):
         self.view = None
         self.channelsList = None
         self.deviceList = None
+        self.buffer = None
 
         self.fileMenu = None
         self.fileMenuActions = None
@@ -111,6 +112,14 @@ class Presenter(object):
 
         # Set the devices
         self.view.deviceSelector.addItems(self.deviceList)
+
+    def setBuffer(self, buffer):
+        self.buffer = buffer
+
+        self.view.connectDevice.clicked.connect(self.buffer.start_collection)
+        self.view.disconnectDevice.clicked.connect(self.buffer.stop_collection)
+        self.view.recordData.clicked.connect(self.buffer.start_recording)
+        self.view.stopRecording.clicked.connect(self.buffer.stop_recording)
 
 
 def main(argv=None):
@@ -176,6 +185,7 @@ def main(argv=None):
     presenter.setDeviceList(devices)
 
     presenter.setView(Main())
+    presenter.setBuffer(my_buffer)
     presenter.view.show()
 
     sys.exit(app.exec_())
