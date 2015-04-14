@@ -3,6 +3,13 @@
 
 """The ITC Module.
 
+This module contains the driver for controlling the Oxford ITC503 temperature
+controller.
+This uses PyVISA and creates a resource attribute of this class, which provides
+access to the device.
+Additionally included in this module is the main measurement thread which
+collects the data from all three temperature sensors.
+
 """
 
 import os
@@ -19,6 +26,59 @@ SENSORS = {"1": "TSorp", "2": "THe3", "3": "T1K"}
 
 
 class ITCDevice(object):
+    """The ITC Driver Object
+
+    This provided high level access to much of the functionality of the ITC503
+    temperature controller.
+    The device is directly accessable via the resource attribute.
+
+    Parameters
+    ----------
+    address : str
+        The visa address of the ITC device.
+        Example: "GPIB1::24::INSTR"
+    read_term : str, optional
+        The reading terminatin character of the device
+        DEFUALT: "\r"
+
+    Attributes
+    ----------
+    resource : pyvisa.resources.gpib.GPIBInstrument
+        The instance of the gpib instrument giving direct access to the device.
+    address : str
+        The visa address of the device
+        Example: "GPIB1::24::INSTR"
+    read_term : str
+        The reading termination character of the device
+    write_term : str
+        The writing termination character of the device
+    auto_heat : bool
+        Whether the auto heating option is turned on (i.e. the feedback control
+        via the pre-programmed PID values already stored in the device)
+    auto_pid : bool
+        Whether the auto PID option is turned on. This uses pre-programmed PID
+        tables stored in the device.
+
+    Methods
+    -------
+    set_resource(resource=, resource_address)
+    get_tsorp
+    get_the3
+    get_t1k
+    get_heater_sensor
+    set_setpoint(setpoint)
+    get_setpoint
+    auto_heat_on
+    auto_heat_off
+    get_auto_heat_status
+    auto_pid_on
+    auto_pid_off
+    get_auto_pid_status
+    set_heater_output(output)
+    get_heater_output
+    get_all_temperatures
+
+    """
 
     def __init__(self, address, read_term="\r",
                  write_term="\r"):
@@ -31,36 +91,84 @@ class ITCDevice(object):
         self.auto_heat = False
         self.auto_pid = False
 
-    def set_resource(self, resource, resource_address=None):
+    def set_resource(self, resource):
+        """Set the VISA resource for the device.
+
+        The sets the VISA resources as the 'resource' attribute of the object.
+
+        Parameters
+        ----------
+        resource : method
+            This is the method from
+            pyvisa.highlevel.ResourceManager.open_resource() and it will take
+            the subsequent address attribute of the class as a parameter.
+
+        """
         self.resource = resource(self.address,
                                  read_termination=self.read_term,
                                  write_termination=self.write_term)
 
     def get_tsorp(self):
-        "Get the temperature at the sorption pump."
+        """Get the temperature at the sorption pump.
+
+        Returns
+        -------
+        tuple : (str, float)
+            A tuple with the name of the value ('TSorp') and the value in
+            Kelvin
+
+        """
         tsorp_str = self.resource.query("R1")
         tsorp_flt = float(tsorp_str.lstrip("R"))
         return ('TSorp', tsorp_flt)
 
     def get_the3(self):
-        "Get the temperature at the sorption pump."
+        """Get the temperature at the helium-3 pot."
+
+        Returns
+        -------
+        tuple : (str, float)
+            A tuple with the name of the value ('THe3') and the value in
+            Kelvin.
+
+        """
         the3_str = self.resource.query("R2")
         the3_flt = float(the3_str.lstrip("R"))
         return ('THe3', the3_flt)
 
     def get_t1k(self):
-        "Get the temperature at the sorption pump."
+        """Get the temperature at the 1K pot.
+
+        Returns
+        -------
+        tuple : (str, float)
+            A tuple with the name of the value ('T1K') and the value in Kelvin.
+
+        """
         t1k_str = self.resource.query("R3")
         t1k_flt = float(t1k_str.lstrip("R"))
         return ('T1K', t1k_flt)
 
     def _set_heater_to_tsrop(self):
-        "Set the heater to the sorption pump"
+        """Set the heater to the sorption pump.
+
+        This sets the sensor to be used during automatic control to the
+        helium-3 sorption pump sensor.
+
+        """
         self.resource.query("H1")
         self.heater_set = True
 
     def get_heater_sensor(self):
-        "Get the heater sensor"
+        """Get the heater sensor
+
+        Returns
+        -------
+        heater_sensor : str
+            The name of the temperature sensor that is being used for automatic
+            control.
+
+        """
         status_byte = self.resource.query("X")
         if status_byte == 'ERROR':
             status_byte = self.resource.query("XH")
@@ -68,7 +176,14 @@ class ITCDevice(object):
         return SENSORS[sensor_nr]
 
     def set_setpoint(self, setpoint):
-        "Set the set point temperature of the sorption pump"
+        """Set the set point temperature of the sorption pump.
+
+        Parameters
+        ----------
+        setpoint : float
+            The set point temperature in Kelvin for the automatic control
+
+        """
         if not isinstance(setpoint, (float, int)):
             raise TypeError("The setpoint provided needs to be a float "
                             "or an int.")
@@ -77,7 +192,15 @@ class ITCDevice(object):
         self.resource.query("T{:.3f}".format(setpoint))
 
     def get_setpoint(self):
-        "Get the setpoint of the sorption pump heater."
+        """Get the setpoint of the sorption pump heater.
+
+        Returns
+        -------
+        tuple : (str, float)
+            A tuple with the name of the value being returned ('Setpoint') and
+            the value in Kelvin
+
+        """
         setpoint_str = self.resource.query("R0")
         setpoint_flt = float(setpoint_str.lstrip("R"))
         return ('Setpoint', setpoint_flt)
@@ -93,6 +216,15 @@ class ITCDevice(object):
         self.auto_heat = False
 
     def get_auto_heat_status(self):
+        """Get the status of autoheating
+
+        Returns
+        -------
+        tuple : (str, str)
+            The first string is 'AutoHeat', i.e. the name of the value, and the
+            second is either 'On' for automatic control on or 'Off'.
+
+        """
         sensor_nr = self.resource.query("X")
         if sensor_nr == 'ERROR':
             sensor_nr = self.resource.query("XA")
@@ -115,7 +247,15 @@ class ITCDevice(object):
         self.auto_pid = False
 
     def get_auto_pid_status(self):
-        "Get the status of the auto pid setting"
+        """Get the status of the auto pid setting
+
+        Returns
+        -------
+        tuple : (str, str)
+            The first string is 'AutoPID', i.e. the name of the value, and the
+            second is either 'On' for automatic control on or 'Off'.
+
+        """
         status_byte = self.resource.query("X")
         if status_byte == 'ERROR':
             status_byte = self.resource.query("XL")
@@ -128,20 +268,46 @@ class ITCDevice(object):
             return ('AutoPID', "On")
 
     def set_heater_output(self, output):
-        "Set the heater output manually"
+        """Set the heater output manually
+
+        Parameters
+        ----------
+        output : float
+            The desired output of the heater in %
+
+        """
         if not isinstance(output, (float, int)):
             raise TypeError("The output provided needs to be a float "
                             "or an int.")
         self.resource.query("O{:.1f}".format(output))
 
     def get_heater_output(self):
-        "Get the current heater output"
+        """Get the current heater output
+
+        Returns
+        -------
+        tuple : (str, float)
+            The string is 'HeaterOutput', i.e. the name of the value, and the
+            value returned is a float representing the heater output in %.
+
+        """
         heater_output_str = self.resource.query("R5")
         heater_output_flt = float(heater_output_str.lstrip("R"))
         return ('HeaterOutput', heater_output_flt)
 
     def get_all_temperatures(self):
-        "Get all temperatures from all three sensors."
+        """Get all temperatures from all three sensors.
+
+        Returns
+        -------
+        all_temperatures : tuple
+            This tuple contains the following:
+            1. Current datetime stamp
+            2. Reading from the sorption pump sensor
+            2. Reading from the helium-3 sensor
+            4. Reading from the 1K pot sensor
+
+        """
         now = datetime.now()
         TSorp = self.get_tsorp()
         THe3 = self.get_the3()
@@ -177,6 +343,7 @@ def main():
             itc01 = ITCDevice(resource_address)
             itc01.set_resource(rm.open_resource)
 
+    print(type(itc01.resource))
     itc_thread = ITCMeasurementThread(itc01, ['TSorp', 'THe3', 'T1K'])
     itc_thread.start()
     time.sleep(0.5)
