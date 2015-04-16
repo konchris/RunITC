@@ -122,7 +122,7 @@ class Buffer(object):
 
         for dev_name in self.devices.keys():
             d[dev_name] = {}
-            d[dev_name]['timestamp'] = np.array([], dtype='datetime64[us]')
+            d[dev_name]['timestamp'] = np.array([], dtype='datetime64[ns]')
             for chan_name in self.devices[dev_name]['thread'].chan_list:
                 d[dev_name][chan_name] = np.array([])
 

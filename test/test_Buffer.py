@@ -141,7 +141,7 @@ class BufferTestCase(unittest.TestCase):
         name = 'TestCollector'
         q = Queue()
         dev_data = {'Device1': {'timestamp': np.array([],
-                                                      dtype='datetime64[us]'),
+                                                      dtype='datetime64[ns]'),
                                 'channel1': np.array([]),
                                 'channel2': np.array([])}}
         t = BufferCollectionThread(name, q, dev_data['Device1'],
@@ -186,7 +186,7 @@ class BufferTestCase(unittest.TestCase):
 
     def test_create_record_thread(self):
         dev_data = {'Device1': {'timestamp': np.array([1, 2, 3],
-                                                      dtype='datetime64[us]'),
+                                                      dtype='datetime64[ns]'),
                                 'channel1': np.array([1, 2, 3]),
                                 'channel2': np.array([1, 2, 3])}}
         meas_name = 'TestMeasurement'
