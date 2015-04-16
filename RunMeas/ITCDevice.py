@@ -19,9 +19,6 @@ from datetime import datetime
 from threading import Thread
 from queue import Queue
 
-DEVPATH = os.path.join(os.getcwd(), 'test', 'devices.yaml')
-# DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
-
 SENSORS = {"1": "TSorp", "2": "THe3", "3": "T1K"}
 
 
@@ -316,6 +313,15 @@ class ITCDevice(object):
 
 
 class ITCMeasurementThread(Thread):
+    """Thread for running continuous retrieval of data from the ITC.
+
+    Once started, this thread will continuously and periodically ask the ITC
+    for data, with a period defined by the 'delay' parameter.
+
+    Parameteres
+
+
+    """
 
     def __init__(self, device, chan_list, delay=0.1):
         super(ITCMeasurementThread, self).__init__()
@@ -336,6 +342,9 @@ class ITCMeasurementThread(Thread):
 
 
 def main():
+
+    DEVPATH = os.path.join(os.getcwd(), 'test', 'devices.yaml')
+    # DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
 
     rm = visa.ResourceManager("{}@sim".format(DEVPATH))
     for resource_address in rm.list_resources():
