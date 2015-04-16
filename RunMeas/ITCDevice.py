@@ -316,15 +316,54 @@ class ITCMeasurementThread(Thread):
     """Thread for running continuous retrieval of data from the ITC.
 
     Once started, this thread will continuously and periodically ask the ITC
-    for data, with a period defined by the 'delay' parameter.
+    for data, with a period defined by the 'delay' parameter. The thread can be
+    stopped by calling its stop_thread method, which sets the stop attribute
+    to true.
 
-    Parameteres
+    Parameters
+    ----------
+    device : ITCDevice
+        The instance of the device that shall be queried for data.
+    chan_list : list
+        A list of strings giving name to the channels that will be queried.
+        This is necessary so that the collection buffer can setup its data
+        before collection starts.
+        The order does not matter.
+    delay : float, optional
+        The delay, in seconds, between queries to the device.
+        DEFAULT: 0.2 s
 
+    Attributes
+    ----------
+    stop : boolean
+        The stop flag. When true the thread loop will end.
+    device : ITCDevice
+        The instance of the device that shall be queried for data.
+    q : queue.Queue
+        The communications queue into which the queried data is insered for
+        other process to access.
+    delay : float
+        The delay, in seconds, between queries to the device.
+    chan_list : list
+        A list of strings giving name to the channels that will be queried.
+        This is necessary so that the collection buffer can setup its data
+        before collection starts.
+        The order does not matter.
+
+    Methods
+    -------
+    run
+    stop_thread
 
     """
 
-    def __init__(self, device, chan_list, delay=0.1):
+    def __init__(self, device, chan_list, delay=0.2):
         super(ITCMeasurementThread, self).__init__()
+        assert type(chan_list) is list, ('The chan_list parameter needs to be '
+                                         'a list of strings naming the '
+                                         'from which data will be collected.')
+        assert type(delay) is float, ('The delay passed to the measurement '
+                                      'thread needs to be a float')
         self.stop = False
         self.device = device
         self.q = Queue()
@@ -332,12 +371,20 @@ class ITCMeasurementThread(Thread):
         self.chan_list = chan_list
 
     def run(self):
+        """Method representing the thread's activity
+
+        See Also
+        --------
+        threading.Thread
+
+        """
         while not self.stop:
             time.sleep(self.delay)
             temps = self.device.get_all_temperatures()
             self.q.put(temps)
 
     def stop_thread(self):
+        """Method to call to halt the thread's activity."""
         self.stop = True
 
 
@@ -352,8 +399,9 @@ def main():
             itc01 = ITCDevice(resource_address)
             itc01.set_resource(rm.open_resource)
 
-    print(type(itc01.resource))
-    itc_thread = ITCMeasurementThread(itc01, ['TSorp', 'THe3', 'T1K'])
+    itc_thread = ITCMeasurementThread(itc01,
+                                      ['THe3', 'TSorp', 'T1K'],
+                                      delay=0.2)
     itc_thread.start()
     time.sleep(0.5)
     itc_thread.stop_thread()
