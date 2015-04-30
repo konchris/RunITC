@@ -105,15 +105,16 @@ devices:
     dialogues:
       - q: '*IDN?'
         r: 'AH2550A'
+      - q: 'CO ON'
+      - q: 'CO OF'
     properties:
       AVERAGE:
         default: 4
         getter:
           q: "SH AV"
-          r: "AVEREXP={:d}"
+          r: "AVERAGE         AVEREXP={:d}"
         setter:
           q: "AV {:d}"
-          r: "None"
         specs:
           min: 0
           max: 15
