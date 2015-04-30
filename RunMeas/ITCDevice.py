@@ -25,7 +25,7 @@ SENSORS = {"1": "TSorp", "2": "THe3", "3": "T1K"}
 class ITCDevice(object):
     """The ITC Driver Object
 
-    This provided high level access to much of the functionality of the ITC503
+    This provides high level access to much of the functionality of the ITC503
     temperature controller.
     The device is directly accessable via the resource attribute.
 
