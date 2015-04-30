@@ -96,6 +96,30 @@ devices:
           min: 0.0
           max: 99.9
           type: float
+  AH:
+    eom:
+      GPIB INSTR:
+        q: '\n'
+        r: '\n'
+    error: ERROR
+    dialogues:
+      - q: '*IDN?'
+        r: 'AH2550A'
+    properties:
+      AVERAGE:
+        default: 4
+        getter:
+          q: "SH AV"
+          r: "AVEREXP={:d}"
+        setter:
+          q: "AV {:d}"
+          r: "None"
+        specs:
+          min: 0
+          max: 15
+          type: int
 resources:
   GPIB1::24::INSTR:
     device: ITC503
+  GPIB1::28::INSTR:
+    device: AH
