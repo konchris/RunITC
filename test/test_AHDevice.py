@@ -6,10 +6,12 @@ import time
 from queue import Queue
 from datetime import datetime
 
+
 from RunMeas.AHDevice import AHDevice, AHMeasurementThread
 
 DEVPATH = os.path.join(os.getcwd(), 'test', 'devices.yaml')
 # DEVPATH = '/home/chris/Programming/github/RunMeas/test/devices.yaml'
+
 
 class DeviceTestCase(unittest.TestCase):
     """Test the device class."""
@@ -68,4 +70,7 @@ class DeviceTestCase(unittest.TestCase):
     def test_stop_continuous(self):
         "Test starting continuous measurements"
         self.ah.stop_continuous()
-        
+
+    def test_get_mav(self):
+        "Read if there is another value available"
+        self.ah.get_mav()

@@ -107,6 +107,8 @@ devices:
         r: 'AH2550A'
       - q: 'CO ON'
       - q: 'CO OF'
+      - q: '*STB?'
+        r: '65'
     properties:
       AVERAGE:
         default: 4

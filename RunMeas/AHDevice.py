@@ -115,8 +115,14 @@ class AHDevice(object):
         "Stop measurements which are taken continuously"
         self.resource.write('CO OF')
 
-    def get_values(self):
+    def get_status_byte(self):
         "Hi"
+        stb = self.resource.read_stb()
+        print(stb)
+        return('STB', stb)
+
+    def get_mav(self):
+        self.get_status_byte()
 
 
 class AHMeasurementThread(Thread):
