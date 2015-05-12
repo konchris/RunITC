@@ -106,6 +106,7 @@ devices:
       - q: '*IDN?'
         r: 'AH2550A'
       - q: 'CO ON'
+        r: 'C= XXXX.XXXX\tPF L= XXX.XXXX\tNS V= X.XXX\tV'
       - q: 'CO OF'
       - q: '*STB?'
         r: '65'
