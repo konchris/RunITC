@@ -116,13 +116,35 @@ class AHDevice(object):
         self.resource.write('CO OF')
 
     def get_status_byte(self):
-        "Hi"
+        """Get the status byte of the device
+
+        Returns
+        ----------
+        stb: int
+           The interger form of the status byte.
+
+        """
+
         stb = self.resource.read_stb()
-        print(stb)
-        return('STB', stb)
+        return ('STB', stb)
 
     def get_mav(self):
-        self.get_status_byte()
+        """Get the MAv bit of the device's status byte
+
+        Returns
+        ----------
+        MAv: boolean
+           Whether the MAv bit is set or not
+
+        """
+
+        stb = self.resource.read_stb()
+        if stb & 0b1000000:
+            MAv = True
+        else:
+            MAv = False
+
+        return ('MAv', MAv)
 
 
 class AHMeasurementThread(Thread):
