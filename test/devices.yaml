@@ -106,10 +106,10 @@ devices:
       - q: '*IDN?'
         r: 'AH2550A'
       - q: 'CO ON'
-        r: 'C= XXXX.XXXX\tPF L= XXX.XXXX\tNS V= X.XXX\tV'
+        r: "C= 922.5934\tPF L= 13.4108\tNS V= 1.50\tV"
       - q: 'CO OF'
-      - q: '*STB?'
-        r: '65'
+      - q: 'SINGLE'
+        r: "C= 922.5934\tPF L= 13.4108\tNS V= 1.50\tV"
     properties:
       AVERAGE:
         default: 4

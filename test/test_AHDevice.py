@@ -63,14 +63,13 @@ class DeviceTestCase(unittest.TestCase):
         self.ah.resource.read()
         self.assertEqual(self.ah.get_average(), ('AVERAGE', 5))
 
-    def test_start_continuous(self):
-        "Test starting continuous measurements"
-        self.ah.start_continuous()
+    def test_get_single(self):
+        "Test collecting a single measurement value"
+        (cap, loss, volt) = self.ah.get_single()
+        self.assertEqual(cap, 922.5934)
+        self.assertEqual(loss, 13.4108)
+        self.assertEqual(volt, 1.5)
 
-    def test_stop_continuous(self):
-        "Test starting continuous measurements"
-        self.ah.stop_continuous()
 
-    def test_get_mav(self):
-        "Read if there is another value available"
-        self.ah.get_mav()
+if __name__ == "__main__":
+    unittest.main()

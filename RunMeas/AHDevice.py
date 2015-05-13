@@ -107,44 +107,31 @@ class AHDevice(object):
                             "int.")
         self.resource.write("AV {:d}".format(aveg_exp))
 
-    def start_continuous(self):
-        "Initiate measurements which are taken continuously"
-        self.resource.write('CO ON')
-
-    def stop_continuous(self):
-        "Stop measurements which are taken continuously"
-        self.resource.write('CO OF')
-
-    def get_status_byte(self):
-        """Get the status byte of the device
+    def get_single(self):
+        """Get a single measurement value
 
         Returns
-        ----------
-        stb: int
-           The interger form of the status byte.
+        -------
+        cap : float
+            The capacitance in pF
+        loss : float
+            The loss in nS
+        volt : float
+            The applied voltage in V
 
         """
+        val_string = self.resource.query('SINGLE')
+        val_list = val_string.split('= ')
+        cap_string = val_list[1]
+        loss_string = val_list[2]
+        volt_string = val_list[3]
+        cap = float(cap_string.rstrip('PF L'))
+        loss = float(loss_string.rstrip('NS V'))
+        volt = float(volt_string.rstrip('V'))
+        return (cap, loss, volt)
 
-        stb = self.resource.read_stb()
-        return ('STB', stb)
-
-    def get_mav(self):
-        """Get the MAv bit of the device's status byte
-
-        Returns
-        ----------
-        MAv: boolean
-           Whether the MAv bit is set or not
-
-        """
-
-        stb = self.resource.read_stb()
-        if stb & 0b1000000:
-            MAv = True
-        else:
-            MAv = False
-
-        return ('MAv', MAv)
+    def get_cap(self):
+        """Collect and return """
 
 
 class AHMeasurementThread(Thread):
