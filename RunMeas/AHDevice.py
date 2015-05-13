@@ -13,11 +13,13 @@ collects the data from the measurement input.
 """
 
 import os
+import sys
 import visa
 import time
 from datetime import datetime
 from threading import Thread
 from queue import Queue
+#from ADwin import ADwin
 
 
 class AHDevice(object):
@@ -132,20 +134,40 @@ class AHDevice(object):
 
     def get_cap(self):
         """Collect and return """
+        pass
 
 
-class AHMeasurementThread(Thread):
-    """Thread for running continuous retrieval of data from the AH."""
-    pass
-
-
-def main():
+def main(argv=None):
 
     DEVPATH = os.path.join(os.getcwd(), 'test', 'devices.yaml')
 
-    rm = visa.ResourceManager("{}@sim".format(DEVPATH))
-    for resource_address in rm.list_resources():
-        print(resource_address)
+    if argv is None:
+        argv = sys.argv
+
+    if sys.platform == 'win32':
+        from ADwin import ADwin
+        adw = ADwin()
+        rm = visa.ResourceManager()
+    elif sys.platform == 'linux':
+        rm = visa.ResourceManager("{}@sim".format(DEVPATH))
+
+    ah = AHDevice(address='GPIB1::28::INSTR')
+    ah.set_resource(rm.open_resource)
+
+    while 1:
+        (cap, loss, volt) = ah.get_single()
+        print('Capacitance = {} pF\r'.format(cap), end="")
+
+        if sys.platform == 'win32':
+            adw.Set_Fpar(26, cap)
+
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print('Exiting on Ctrl-C')
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
