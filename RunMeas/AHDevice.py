@@ -166,7 +166,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print('Exiting on Ctrl-C')
+        print('\nExiting on Ctrl-C')
         try:
             sys.exit(0)
         except SystemExit:
