@@ -159,7 +159,7 @@ def main(argv=None):
         print('Capacitance = {} pF\r'.format(cap), end="")
 
         if sys.platform == 'win32':
-            adw.Set_Fpar(26, cap)
+            adw.Set_FPar(26, cap)
 
 
 if __name__ == "__main__":
