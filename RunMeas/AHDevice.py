@@ -156,7 +156,7 @@ def main(argv=None):
 
     while 1:
         (cap, loss, volt) = ah.get_single()
-        print('Capacitance = {} pF\r'.format(cap), end="")
+        print('Capacitance = {:.4f} pF\r'.format(cap), end="")
 
         if sys.platform == 'win32':
             adw.Set_FPar(26, cap)
