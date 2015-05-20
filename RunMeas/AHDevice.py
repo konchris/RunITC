@@ -126,10 +126,20 @@ class AHDevice(object):
         val_list = val_string.split('= ')
         cap_string = val_list[1]
         loss_string = val_list[2]
-        volt_string = val_list[3]
+        try:
+            volt_string = val_list[3]
+        except IndexError:
+            print('Got the index error at with signle returning:', val_list)
+            print(sys.exc_info()[0])
+            cap_string = '0.0'
+            loss_string = '0.0'
+            volt_string = '0.0'
         cap = float(cap_string.rstrip('PF L'))
         loss = float(loss_string.rstrip('NS V'))
-        volt = float(volt_string.rstrip('V'))
+        if 'OVEN' in volt_string:
+            volt = float(volt_string.rstrip('V OVEN'))
+        else:
+            volt = float(volt_string.rstrip('V'))
         return (cap, loss, volt)
 
     def get_cap(self):
@@ -157,6 +167,7 @@ def main(argv=None):
     while 1:
         (cap, loss, volt) = ah.get_single()
         print('Capacitance = {:.4f} pF\r'.format(cap), end="")
+        time.sleep(0.4)
 
         if sys.platform == 'win32':
             adw.Set_FPar(26, cap)
