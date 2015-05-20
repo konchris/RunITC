@@ -120,7 +120,7 @@ class ThreadTestCase(unittest.TestCase):
                 self.itc01 = ITCDevice(resource_address)
                 self.itc01.set_resource(self.rm.open_resource)
 
-        self.delay = 0.1
+        self.delay = 0.4
 
         self.itc_thread = ITCMeasurementThread(self.itc01,
                                                ['TSorp', 'THe3', 'T1K'],
@@ -145,14 +145,19 @@ class ThreadTestCase(unittest.TestCase):
         wait = 5
         self.assertTrue(self.itc_thread.q.empty())
         self.itc_thread.start()
+        self.assertTrue(self.itc_thread.is_alive())
         time.sleep(wait*self.delay)
+        self.assertFalse(self.itc_thread.q.empty())
         self.itc_thread.stop_thread()
         self.itc_thread.join()
+        self.assertFalse(self.itc_thread.is_alive())
+        self.assertFalse(self.itc_thread.q.empty())
         i = 0
-        while not self.itc_thread.q.empty():
+        print(self.itc_thread.q.empty(), self.delay)
+        while not self.itc_thread.q.empty() and i < 5:
             self.itc_thread.q.get()
             i += 1
-        self.assertEqual(i, wait)
+        self.assertEqual(i, wait, 'Expected {w} and got only {eye}'.format(w=wait, eye=i))
 
 
 if __name__ == "__main__":
